@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="zozincanvas는 블로그 업로드용 이미지에 펜, 블러, 도형, 화살표, 텍스트를 빠르게 넣는 정적 이미지 편집기입니다.">
+  <meta name="google-adsense-account" content="ca-pub-5779110294111958">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="zozincanvas - 블로그 이미지 편집기">
+  <meta property="og:description" content="서버 업로드 없이 브라우저에서 이미지 블러, 표시, 도형, 텍스트 편집을 처리합니다.">
+  <meta property="og:url" content="https://zozincanvas.zozindev.com/">
+  <meta property="og:site_name" content="zozincanvas">
+  <link rel="canonical" href="https://zozincanvas.zozindev.com/">
+  <title>zozincanvas - 블로그 이미지 편집기</title>
+  <link rel="stylesheet" href="style.css">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5779110294111958" crossorigin="anonymous"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="zozincanvas 홈">
+      <span class="brand-mark">zc</span>
+      <span>zozincanvas</span>
+    </a>
+    <nav class="top-actions" aria-label="상단 메뉴">
+      <button id="themeToggle" class="ghost-button" type="button">라이트</button>
+      <a class="ghost-link" href="#usage">사용법</a>
+    </nav>
+  </header>
+
+  <main class="app">
+    <aside class="panel controls" aria-label="이미지 편집 도구">
+      <section class="control-section">
+        <h1>블로그 이미지 편집기</h1>
+        <p class="muted">사진을 올리고 주변 사람 얼굴 블러, 표시용 도형, 손그림, 텍스트를 바로 추가합니다.</p>
+      </section>
+
+      <section class="control-section">
+        <h2>이미지</h2>
+        <label class="file-drop" for="imageInput">
+          <input id="imageInput" type="file" accept="image/*">
+          <span>이미지 업로드</span>
+          <small>PNG, JPG, WEBP</small>
+        </label>
+        <div class="button-row">
+          <button id="sampleButton" type="button">샘플</button>
+          <button id="resetButton" type="button">초기화</button>
+          <button id="undoButton" type="button">되돌리기</button>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <h2>도구</h2>
+        <div class="tool-grid" role="radiogroup" aria-label="편집 도구">
+          <button class="tool active" data-tool="draw" type="button">펜</button>
+          <button class="tool" data-tool="blur" type="button">블러</button>
+          <button class="tool" data-tool="rect" type="button">사각형</button>
+          <button class="tool" data-tool="roundRect" type="button">둥근네모</button>
+          <button class="tool" data-tool="ellipse" type="button">원</button>
+          <button class="tool" data-tool="line" type="button">선</button>
+          <button class="tool" data-tool="arrow" type="button">화살표</button>
+          <button class="tool" data-tool="sticker" type="button">스티커</button>
+          <button class="tool" data-tool="text" type="button">텍스트</button>
+        </div>
+      </section>
+
+      <section class="control-section two-cols">
+        <label>
+          색상
+          <input id="colorInput" type="color" value="#ff4d4f">
+        </label>
+        <label>
+          굵기
+          <input id="sizeInput" type="range" min="4" max="90" value="22">
+        </label>
+        <label>
+          투명도
+          <input id="alphaInput" type="range" min="20" max="100" value="100">
+        </label>
+        <label>
+          블러
+          <input id="blurInput" type="range" min="4" max="28" value="14">
+        </label>
+        <label>
+          채우기
+          <select id="fillInput">
+            <option value="none">없음</option>
+            <option value="fill">채우기</option>
+          </select>
+        </label>
+        <label>
+          채우기 색상
+          <input id="fillColorInput" type="color" value="#fff36d">
+        </label>
+      </section>
+
+      <section class="control-section">
+        <h2>스티커 / 텍스트</h2>
+        <div class="sticker-row" aria-label="스티커 선택">
+          <button class="sticker active" data-sticker="😊" type="button">😊</button>
+          <button class="sticker" data-sticker="✅" type="button">✅</button>
+          <button class="sticker" data-sticker="⭐" type="button">⭐</button>
+          <button class="sticker" data-sticker="📌" type="button">📌</button>
+          <button class="sticker" data-sticker="💬" type="button">💬</button>
+        </div>
+        <label>
+          텍스트
+          <input id="textInput" type="text" value="여기 확인" maxlength="40">
+        </label>
+      </section>
+
+      <section class="control-section">
+        <h2>내보내기</h2>
+        <div class="two-cols">
+          <label>
+            파일명
+            <input id="filenameInput" type="text" value="blog-image-edited">
+          </label>
+          <label>
+            확장자
+            <select id="formatInput">
+              <option value="image/png">PNG</option>
+              <option value="image/jpeg">JPG</option>
+              <option value="image/webp">WEBP</option>
+            </select>
+          </label>
+        </div>
+        <button id="downloadButton" class="primary-button" type="button">이미지 다운로드</button>
+      </section>
+    </aside>
+
+    <section class="workspace" aria-label="미리보기">
+      <div class="preview-header">
+        <div>
+          <p class="eyebrow">Preview</p>
+          <h2>미리보기</h2>
+        </div>
+        <div id="imageMeta" class="meta">샘플 이미지</div>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="editorCanvas" width="1280" height="820" aria-label="이미지 편집 캔버스"></canvas>
+      </div>
+      <div class="tips" id="usage">
+        <strong>사용법</strong>
+        <span>업로드 후 펜/블러는 드래그, 도형은 드래그로 크기 조절, 스티커/텍스트는 원하는 위치를 클릭합니다. 이미지는 서버로 업로드되지 않습니다.</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
