@@ -350,6 +350,10 @@ canvas {
     grid-template-columns: 1fr;
   }
 
+  .workspace {
+    order: -1;
+  }
+
   .controls {
     max-height: none;
   }
