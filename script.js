@@ -8,8 +8,12 @@ const state = {
   snapshot: null,
   blurSource: null,
   sticker: "😊",
-  history: []
+  history: [],
+  originalDataUrl: null,
+  activePointerId: null
 };
+
+const shapeTools = ["rect", "roundRect", "ellipse", "line", "arrow"];
 
 const els = {
   imageInput: document.querySelector("#imageInput"),
@@ -18,6 +22,8 @@ const els = {
   undoButton: document.querySelector("#undoButton"),
   downloadButton: document.querySelector("#downloadButton"),
   colorInput: document.querySelector("#colorInput"),
+  fillColorInput: document.querySelector("#fillColorInput"),
+  fillInput: document.querySelector("#fillInput"),
   sizeInput: document.querySelector("#sizeInput"),
   alphaInput: document.querySelector("#alphaInput"),
   blurInput: document.querySelector("#blurInput"),
@@ -56,7 +62,7 @@ function drawSample() {
   ctx.font = "700 32px Pretendard, sans-serif";
   ctx.fillText("블러 테스트용 샘플", 86, 99);
 
-  pushHistory();
+  setOriginalFromCanvas();
   updateMeta("1280 x 820 @ sample");
 }
 
@@ -105,24 +111,45 @@ function updateMeta(text) {
   els.imageMeta.textContent = text;
 }
 
+function setOriginalFromCanvas() {
+  const dataUrl = canvas.toDataURL("image/png");
+  state.originalDataUrl = dataUrl;
+  state.history = [dataUrl];
+}
+
 function pushHistory() {
   state.history.push(canvas.toDataURL("image/png"));
   if (state.history.length > 18) state.history.shift();
 }
 
-function restoreDataUrl(url) {
+function restoreDataUrl(url, resetHistory = false) {
   const image = new Image();
   image.onload = () => {
     resizeCanvas(image.naturalWidth, image.naturalHeight);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(image, 0, 0);
+    if (resetHistory) {
+      state.history = [url];
+    }
     updateMeta(`${canvas.width} x ${canvas.height}`);
   };
   image.src = url;
 }
 
+function resetToOriginal() {
+  if (state.originalDataUrl) {
+    restoreDataUrl(state.originalDataUrl, true);
+  } else {
+    drawSample();
+  }
+}
+
 function loadFile(file) {
   if (!file) return;
+  if (!/^image\/(png|jpe?g|webp)$/i.test(file.type)) {
+    updateMeta("PNG, JPG, WEBP만 지원");
+    return;
+  }
   const reader = new FileReader();
   reader.onload = () => {
     const image = new Image();
@@ -132,9 +159,8 @@ function loadFile(file) {
       resizeCanvas(image.naturalWidth * scale, image.naturalHeight * scale);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-      state.history = [];
-      pushHistory();
-      updateMeta(`${canvas.width} x ${canvas.height}`);
+      setOriginalFromCanvas();
+      updateMeta(`${canvas.width} x ${canvas.height} @ ${file.name}`);
     };
     image.src = reader.result;
   };
@@ -143,16 +169,17 @@ function loadFile(file) {
 
 function pointFromEvent(event) {
   const rect = canvas.getBoundingClientRect();
-  const client = event.touches ? event.touches[0] : event;
   return {
-    x: (client.clientX - rect.left) * (canvas.width / rect.width),
-    y: (client.clientY - rect.top) * (canvas.height / rect.height)
+    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+    y: (event.clientY - rect.top) * (canvas.height / rect.height)
   };
 }
 
 function getStyle() {
   return {
     color: els.colorInput.value,
+    fillColor: els.fillColorInput.value,
+    fill: els.fillInput.value === "fill",
     size: Number(els.sizeInput.value),
     alpha: Number(els.alphaInput.value) / 100,
     blur: Number(els.blurInput.value)
@@ -180,15 +207,21 @@ function prepareBlurSource() {
 
 function beginDraw(event) {
   event.preventDefault();
+  if (state.activePointerId !== null) return;
   const point = pointFromEvent(event);
   state.drawing = true;
   state.start = point;
+  state.activePointerId = event.pointerId;
+  canvas.setPointerCapture(event.pointerId);
 
-  if (["draw", "blur", "rect", "ellipse", "arrow", "crop"].includes(state.tool)) {
+  if (["draw", "blur", ...shapeTools].includes(state.tool)) {
     saveSnapshot();
   }
 
-  if (state.tool === "blur") prepareBlurSource();
+  if (state.tool === "blur") {
+    prepareBlurSource();
+    paintBlur(point);
+  }
   if (state.tool === "draw") {
     const { color, size, alpha } = getStyle();
     ctx.globalAlpha = alpha;
@@ -198,23 +231,34 @@ function beginDraw(event) {
     ctx.lineJoin = "round";
     ctx.beginPath();
     ctx.moveTo(point.x, point.y);
+    ctx.lineTo(point.x + 0.01, point.y + 0.01);
+    ctx.stroke();
   }
 
   if (state.tool === "sticker") {
     drawSticker(point);
     pushHistory();
     state.drawing = false;
+    if (canvas.hasPointerCapture(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+    state.activePointerId = null;
   }
 
   if (state.tool === "text") {
     drawText(point);
     pushHistory();
     state.drawing = false;
+    if (canvas.hasPointerCapture(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+    state.activePointerId = null;
   }
 }
 
 function moveDraw(event) {
   if (!state.drawing) return;
+  if (event.pointerId !== state.activePointerId) return;
   event.preventDefault();
   const point = pointFromEvent(event);
 
@@ -229,7 +273,7 @@ function moveDraw(event) {
     return;
   }
 
-  if (["rect", "ellipse", "arrow", "crop"].includes(state.tool)) {
+  if (shapeTools.includes(state.tool)) {
     restoreSnapshot();
     drawShapePreview(state.start, point);
   }
@@ -237,17 +281,23 @@ function moveDraw(event) {
 
 function endDraw(event) {
   if (!state.drawing) return;
+  if (event.pointerId !== state.activePointerId) return;
   event.preventDefault();
 
-  if (state.tool === "crop") {
-    const point = pointFromEvent(event.changedTouches ? event.changedTouches[0] : event);
-    cropToRect(state.start, point);
+  if (shapeTools.includes(state.tool)) {
+    const point = pointFromEvent(event);
+    restoreSnapshot();
+    drawShapePreview(state.start, point);
   }
 
   ctx.globalAlpha = 1;
   state.drawing = false;
   state.snapshot = null;
   state.blurSource = null;
+  state.activePointerId = null;
+  if (canvas.hasPointerCapture(event.pointerId)) {
+    canvas.releasePointerCapture(event.pointerId);
+  }
   pushHistory();
 }
 
@@ -264,33 +314,41 @@ function paintBlur(point) {
 }
 
 function drawShapePreview(start, end) {
-  const { color, size, alpha } = getStyle();
+  const { color, fillColor, fill, size, alpha } = getStyle();
   const x = Math.min(start.x, end.x);
   const y = Math.min(start.y, end.y);
   const w = Math.abs(end.x - start.x);
   const h = Math.abs(end.y - start.y);
 
   ctx.globalAlpha = alpha;
-  ctx.strokeStyle = state.tool === "crop" ? "#ffffff" : color;
-  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = fillColor;
   ctx.lineWidth = size;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
-  if (state.tool === "rect" || state.tool === "crop") {
+  if (state.tool === "rect") {
+    if (fill) ctx.fillRect(x, y, w, h);
     ctx.strokeRect(x, y, w, h);
-    if (state.tool === "crop") {
-      ctx.fillStyle = "rgba(0, 0, 0, .28)";
-      ctx.fillRect(0, 0, canvas.width, y);
-      ctx.fillRect(0, y + h, canvas.width, canvas.height - y - h);
-      ctx.fillRect(0, y, x, h);
-      ctx.fillRect(x + w, y, canvas.width - x - w, h);
-    }
+  }
+
+  if (state.tool === "roundRect") {
+    roundRect(x, y, w, h, Math.min(36, Math.max(10, size * 1.4)));
+    if (fill) ctx.fill();
+    ctx.stroke();
   }
 
   if (state.tool === "ellipse") {
     ctx.beginPath();
     ctx.ellipse(x + w / 2, y + h / 2, Math.max(1, w / 2), Math.max(1, h / 2), 0, 0, Math.PI * 2);
+    if (fill) ctx.fill();
+    ctx.stroke();
+  }
+
+  if (state.tool === "line") {
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
     ctx.stroke();
   }
 
@@ -313,19 +371,6 @@ function drawArrow(start, end, size, color) {
   ctx.lineTo(end.x - head * Math.cos(angle + Math.PI / 6), end.y - head * Math.sin(angle + Math.PI / 6));
   ctx.closePath();
   ctx.fill();
-}
-
-function cropToRect(start, end) {
-  restoreSnapshot();
-  const x = Math.max(0, Math.min(start.x, end.x));
-  const y = Math.max(0, Math.min(start.y, end.y));
-  const w = Math.min(canvas.width - x, Math.abs(end.x - start.x));
-  const h = Math.min(canvas.height - y, Math.abs(end.y - start.y));
-  if (w < 20 || h < 20) return;
-  const crop = ctx.getImageData(x, y, w, h);
-  resizeCanvas(w, h);
-  ctx.putImageData(crop, 0, 0);
-  updateMeta(`${canvas.width} x ${canvas.height}`);
 }
 
 function drawSticker(point) {
@@ -365,9 +410,18 @@ function downloadImage() {
   const mime = els.formatInput.value;
   const ext = mime.split("/")[1].replace("jpeg", "jpg");
   const filename = `${els.filenameInput.value.trim() || "blog-image-edited"}.${ext}`;
+  const outputCanvas = document.createElement("canvas");
+  outputCanvas.width = canvas.width;
+  outputCanvas.height = canvas.height;
+  const outputCtx = outputCanvas.getContext("2d");
+  if (mime === "image/jpeg") {
+    outputCtx.fillStyle = "#ffffff";
+    outputCtx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+  }
+  outputCtx.drawImage(canvas, 0, 0);
   const link = document.createElement("a");
   link.download = filename;
-  link.href = canvas.toDataURL(mime, .92);
+  link.href = outputCanvas.toDataURL(mime, .92);
   link.click();
 }
 
@@ -385,7 +439,7 @@ document.querySelectorAll(".sticker").forEach((button) => {
 
 els.imageInput.addEventListener("change", (event) => loadFile(event.target.files[0]));
 els.sampleButton.addEventListener("click", drawSample);
-els.resetButton.addEventListener("click", drawSample);
+els.resetButton.addEventListener("click", resetToOriginal);
 els.undoButton.addEventListener("click", () => {
   if (state.history.length <= 1) return;
   state.history.pop();
@@ -399,9 +453,7 @@ els.themeToggle.addEventListener("click", () => {
 
 canvas.addEventListener("pointerdown", beginDraw);
 canvas.addEventListener("pointermove", moveDraw);
-window.addEventListener("pointerup", endDraw);
-canvas.addEventListener("touchstart", beginDraw, { passive: false });
-canvas.addEventListener("touchmove", moveDraw, { passive: false });
-window.addEventListener("touchend", endDraw, { passive: false });
+canvas.addEventListener("pointerup", endDraw);
+canvas.addEventListener("pointercancel", endDraw);
 
 drawSample();

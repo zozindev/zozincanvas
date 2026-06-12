@@ -326,6 +326,8 @@ canvas {
   background: #fff;
   box-shadow: 0 14px 45px rgba(0, 0, 0, .25);
   cursor: crosshair;
+  touch-action: none;
+  user-select: none;
 }
 
 .tips {
