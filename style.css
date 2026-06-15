@@ -1,28 +1,29 @@
 :root {
   color-scheme: dark;
-  --bg: #101114;
-  --panel: #191b20;
-  --panel-2: #22252c;
-  --text: #f4f5f7;
-  --muted: #a9afbc;
-  --line: #333844;
-  --accent: #49d39a;
-  --accent-strong: #27b77b;
+  --page: #000000;
+  --ink: #fed002;
+  --muted: #c8a600;
+  --line: #3a3000;
+  --field: #0a0a0a;
+  --bg: var(--page);
+  --panel: #050500;
+  --panel-2: var(--field);
+  --text: var(--ink);
+  --accent: var(--ink);
+  --accent-strong: #ffd93a;
   --danger: #ff5b6b;
-  --shadow: 0 18px 60px rgba(0, 0, 0, .28);
+  --shadow: 0 18px 60px rgba(254, 208, 2, .08);
 }
 
 body.light {
-  color-scheme: light;
-  --bg: #f5f6f8;
-  --panel: #ffffff;
-  --panel-2: #edf0f4;
-  --text: #16191f;
-  --muted: #59616f;
-  --line: #d9dee7;
-  --accent: #0a9f67;
-  --accent-strong: #087c51;
-  --shadow: 0 18px 48px rgba(20, 27, 38, .12);
+  color-scheme: dark;
+  --bg: var(--page);
+  --panel: #050500;
+  --panel-2: var(--field);
+  --text: var(--ink);
+  --accent: var(--ink);
+  --accent-strong: #ffd93a;
+  --shadow: 0 18px 60px rgba(254, 208, 2, .08);
 }
 
 * {
@@ -208,12 +209,14 @@ h2 {
 }
 
 .tool,
-.sticker {
+.sticker,
+.format-button {
   padding: 0 8px;
 }
 
 .tool.active,
 .sticker.active,
+.format-button.active,
 .primary-button {
   border-color: var(--accent);
   background: var(--accent);
@@ -233,6 +236,11 @@ label {
   color: var(--muted);
   font-size: 13px;
   font-weight: 700;
+}
+
+.color-control {
+  display: grid;
+  gap: 8px;
 }
 
 input[type="text"],
@@ -259,8 +267,62 @@ input[type="range"] {
   accent-color: var(--accent);
 }
 
+.color-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.color-tools button {
+  padding: 0 10px;
+}
+
+.swatch-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.swatch {
+  min-height: 30px;
+  border-color: var(--line);
+  background: var(--swatch);
+}
+
+.swatch.active {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+body.picking-color canvas {
+  cursor: copy;
+}
+
 .sticker-row {
   margin-bottom: 12px;
+}
+
+.text-options {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.format-button {
+  width: 42px;
+  font-weight: 900;
+}
+
+.format-button:nth-child(2) {
+  font-style: italic;
+}
+
+.format-button:nth-child(3) {
+  text-decoration: underline;
+}
+
+.format-button:nth-child(4) {
+  text-decoration: line-through;
 }
 
 .sticker {
@@ -302,6 +364,7 @@ input[type="range"] {
 }
 
 .canvas-wrap {
+  position: relative;
   display: grid;
   min-height: min(68vh, 760px);
   place-items: center;
@@ -316,6 +379,33 @@ input[type="range"] {
     linear-gradient(-45deg, transparent 75%, color-mix(in srgb, var(--line) 40%, transparent) 75%);
   background-position: 0 0, 0 10px, 10px -10px, -10px 0;
   background-size: 20px 20px;
+}
+
+.text-editor {
+  position: absolute;
+  z-index: 5;
+  display: none;
+  min-width: 40px;
+  min-height: 28px;
+  resize: none;
+  overflow: hidden;
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+  padding: 0;
+  background: rgba(0, 0, 0, .72);
+  color: var(--accent);
+  outline: 0;
+  line-height: 1.22;
+}
+
+.text-editor.active {
+  display: block;
+}
+
+.file-drop.drag-active,
+.canvas-wrap.drag-active {
+  border-color: var(--accent);
+  outline: 3px solid color-mix(in srgb, var(--accent) 34%, transparent);
 }
 
 canvas {

@@ -11,7 +11,7 @@
   <meta property="og:url" content="https://zozincanvas.zozindev.com/">
   <meta property="og:site_name" content="zozincanvas">
   <link rel="canonical" href="https://zozincanvas.zozindev.com/">
-  <title>zozincanvas - 블로그 이미지 편집기</title>
+  <title>zozincanvas - 이미지 편집기</title>
   <link rel="stylesheet" href="style.css">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5779110294111958" crossorigin="anonymous"></script>
 </head>
@@ -30,16 +30,16 @@
   <main class="app">
     <aside class="panel controls" aria-label="이미지 편집 도구">
       <section class="control-section">
-        <h1>블로그 이미지 편집기</h1>
+        <h1>이미지 편집기</h1>
         <p class="muted">사진을 올리고 주변 사람 얼굴 블러, 표시용 도형, 손그림, 텍스트를 바로 추가합니다.</p>
       </section>
 
       <section class="control-section">
         <h2>이미지</h2>
-        <label class="file-drop" for="imageInput">
+        <label id="uploadDropZone" class="file-drop" for="imageInput">
           <input id="imageInput" type="file" accept="image/*">
           <span>이미지 업로드</span>
-          <small>PNG, JPG, WEBP</small>
+          <small>클릭 또는 드래그 앤 드롭 · PNG, JPG, WEBP</small>
         </label>
         <div class="button-row">
           <button id="sampleButton" type="button">샘플</button>
@@ -51,6 +51,7 @@
       <section class="control-section">
         <h2>도구</h2>
         <div class="tool-grid" role="radiogroup" aria-label="편집 도구">
+          <button class="tool" data-tool="select" type="button">선택</button>
           <button class="tool active" data-tool="draw" type="button">펜</button>
           <button class="tool" data-tool="blur" type="button">블러</button>
           <button class="tool" data-tool="rect" type="button">사각형</button>
@@ -64,10 +65,24 @@
       </section>
 
       <section class="control-section two-cols">
-        <label>
+        <div class="color-control">
+          <label>
           색상
-          <input id="colorInput" type="color" value="#ff4d4f">
-        </label>
+            <input id="colorInput" type="color" value="#ff4d4f">
+          </label>
+          <div class="color-tools" aria-label="색상 설정">
+            <input id="hexInput" type="text" value="#ff4d4f" maxlength="7" aria-label="헥사코드">
+            <button id="eyedropperButton" type="button">스포이드</button>
+          </div>
+          <div class="swatch-row" aria-label="색상 프리셋">
+            <button class="swatch" data-color="#fed002" style="--swatch: #fed002" type="button" aria-label="#fed002"></button>
+            <button class="swatch" data-color="#ff4d4f" style="--swatch: #ff4d4f" type="button" aria-label="#ff4d4f"></button>
+            <button class="swatch" data-color="#22c55e" style="--swatch: #22c55e" type="button" aria-label="#22c55e"></button>
+            <button class="swatch" data-color="#38bdf8" style="--swatch: #38bdf8" type="button" aria-label="#38bdf8"></button>
+            <button class="swatch" data-color="#ffffff" style="--swatch: #ffffff" type="button" aria-label="#ffffff"></button>
+            <button class="swatch" data-color="#000000" style="--swatch: #000000" type="button" aria-label="#000000"></button>
+          </div>
+        </div>
         <label>
           굵기
           <input id="sizeInput" type="range" min="4" max="90" value="22">
@@ -102,10 +117,40 @@
           <button class="sticker" data-sticker="📌" type="button">📌</button>
           <button class="sticker" data-sticker="💬" type="button">💬</button>
         </div>
-        <label>
-          텍스트
-          <input id="textInput" type="text" value="여기 확인" maxlength="40">
-        </label>
+        <div class="text-options" aria-label="텍스트 옵션">
+          <button id="boldToggle" class="format-button" type="button">B</button>
+          <button id="italicToggle" class="format-button" type="button">I</button>
+          <button id="underlineToggle" class="format-button" type="button">U</button>
+          <button id="strikeToggle" class="format-button" type="button">S</button>
+        </div>
+        <div class="two-cols">
+          <label>
+            글꼴
+            <select id="fontInput">
+              <option value="Pretendard, &quot;Noto Sans KR&quot;, sans-serif" selected>기본 고딕</option>
+              <option value="Georgia, serif">Serif</option>
+              <option value="Arial, sans-serif">Arial</option>
+              <option value="&quot;Courier New&quot;, monospace">Mono</option>
+              <option value="Impact, sans-serif">Impact</option>
+            </select>
+          </label>
+          <label>
+            수평 정렬
+            <select id="textAlignInput">
+              <option value="left">왼쪽</option>
+              <option value="center" selected>가운데</option>
+              <option value="right">오른쪽</option>
+            </select>
+          </label>
+          <label>
+            수직 정렬
+            <select id="textVAlignInput">
+              <option value="top">위</option>
+              <option value="middle" selected>가운데</option>
+              <option value="bottom">아래</option>
+            </select>
+          </label>
+        </div>
       </section>
 
       <section class="control-section">
@@ -136,12 +181,13 @@
         </div>
         <div id="imageMeta" class="meta">샘플 이미지</div>
       </div>
-      <div class="canvas-wrap">
+      <div id="canvasDropZone" class="canvas-wrap">
         <canvas id="editorCanvas" width="1280" height="820" aria-label="이미지 편집 캔버스"></canvas>
+        <textarea id="textEditor" class="text-editor" aria-label="텍스트 직접 편집"></textarea>
       </div>
       <div class="tips" id="usage">
         <strong>사용법</strong>
-        <span>업로드 후 펜/블러는 드래그, 도형은 드래그로 크기 조절, 스티커/텍스트는 원하는 위치를 클릭합니다. 이미지는 서버로 업로드되지 않습니다.</span>
+        <span>업로드 후 펜/블러는 드래그, 도형/텍스트는 드래그로 만들고 선택 도구로 위치와 크기를 조절합니다. 텍스트는 편집창 안에서 바로 입력합니다.</span>
       </div>
     </section>
   </main>
