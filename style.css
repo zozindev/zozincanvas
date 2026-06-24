@@ -16,14 +16,19 @@
 }
 
 body.light {
-  color-scheme: dark;
+  color-scheme: light;
+  --page: #fff8d6;
+  --ink: #1c1600;
+  --muted: #766000;
+  --line: #d7b900;
+  --field: #fffdf0;
   --bg: var(--page);
-  --panel: #050500;
+  --panel: #fff4b8;
   --panel-2: var(--field);
   --text: var(--ink);
-  --accent: var(--ink);
-  --accent-strong: #ffd93a;
-  --shadow: 0 18px 60px rgba(254, 208, 2, .08);
+  --accent: #c49f00;
+  --accent-strong: #8f7300;
+  --shadow: 0 18px 48px rgba(70, 56, 0, .14);
 }
 
 * {
@@ -95,8 +100,7 @@ button:hover,
 }
 
 .top-actions,
-.button-row,
-.sticker-row {
+.button-row {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -204,19 +208,15 @@ h2 {
 
 .tool-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
-.tool,
-.sticker,
-.format-button {
+.tool {
   padding: 0 8px;
 }
 
 .tool.active,
-.sticker.active,
-.format-button.active,
 .primary-button {
   border-color: var(--accent);
   background: var(--accent);
@@ -240,6 +240,7 @@ label {
 
 .color-control {
   display: grid;
+  grid-column: 1 / -1;
   gap: 8px;
 }
 
@@ -268,13 +269,7 @@ input[type="range"] {
 }
 
 .color-tools {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-}
-
-.color-tools button {
-  padding: 0 10px;
+  display: block;
 }
 
 .swatch-row {
@@ -298,36 +293,18 @@ body.picking-color canvas {
   cursor: copy;
 }
 
-.sticker-row {
-  margin-bottom: 12px;
+.advanced-options {
+  color: var(--muted);
+  font-size: 13px;
 }
 
-.text-options {
-  display: flex;
-  gap: 8px;
-  margin: 12px 0;
+.advanced-options summary {
+  cursor: pointer;
 }
 
-.format-button {
-  width: 42px;
-  font-weight: 900;
-}
-
-.format-button:nth-child(2) {
-  font-style: italic;
-}
-
-.format-button:nth-child(3) {
-  text-decoration: underline;
-}
-
-.format-button:nth-child(4) {
-  text-decoration: line-through;
-}
-
-.sticker {
-  width: 44px;
-  font-size: 20px;
+.advanced-options button {
+  width: 100%;
+  margin-top: 8px;
 }
 
 .primary-button {

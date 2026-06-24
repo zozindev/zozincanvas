@@ -3,9 +3,10 @@ const ctx = canvas.getContext("2d", { willReadFrequently: true });
 const baseCanvas = document.createElement("canvas");
 const baseCtx = baseCanvas.getContext("2d", { willReadFrequently: true });
 
-const shapeTools = ["rect", "roundRect", "ellipse", "line", "arrow"];
-const objectTools = ["text", "sticker", ...shapeTools];
+const shapeTools = ["rect", "ellipse", "arrow"];
+const objectTools = ["text", ...shapeTools];
 const handleSize = 14;
+const textFontFamily = "\"Nanum Gothic\", \"Noto Sans KR\", sans-serif";
 
 const state = {
   tool: "draw",
@@ -13,7 +14,6 @@ const state = {
   start: null,
   snapshot: null,
   blurSource: null,
-  sticker: "😊",
   history: [],
   originalState: null,
   activePointerId: null,
@@ -38,21 +38,12 @@ const els = {
   colorInput: document.querySelector("#colorInput"),
   hexInput: document.querySelector("#hexInput"),
   eyedropperButton: document.querySelector("#eyedropperButton"),
-  fillColorInput: document.querySelector("#fillColorInput"),
-  fillInput: document.querySelector("#fillInput"),
   sizeInput: document.querySelector("#sizeInput"),
   alphaInput: document.querySelector("#alphaInput"),
   blurInput: document.querySelector("#blurInput"),
   filenameInput: document.querySelector("#filenameInput"),
   formatInput: document.querySelector("#formatInput"),
   textEditor: document.querySelector("#textEditor"),
-  fontInput: document.querySelector("#fontInput"),
-  textAlignInput: document.querySelector("#textAlignInput"),
-  textVAlignInput: document.querySelector("#textVAlignInput"),
-  boldToggle: document.querySelector("#boldToggle"),
-  italicToggle: document.querySelector("#italicToggle"),
-  underlineToggle: document.querySelector("#underlineToggle"),
-  strikeToggle: document.querySelector("#strikeToggle"),
   imageMeta: document.querySelector("#imageMeta"),
   themeToggle: document.querySelector("#themeToggle")
 };
@@ -162,6 +153,17 @@ function pushHistory() {
   if (state.history.length > 18) state.history.shift();
 }
 
+function undoLastAction() {
+  hideTextEditor(false);
+  if (state.history.length <= 1) return;
+  state.history.pop();
+  restoreState(state.history[state.history.length - 1]);
+}
+
+function isEditableTarget(target) {
+  return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target.isContentEditable;
+}
+
 function restoreState(snapshot, resetHistory = false) {
   const image = new Image();
   image.onload = () => {
@@ -259,18 +261,9 @@ function pointFromEvent(event) {
 function getStyle() {
   return {
     color: els.colorInput.value,
-    fillColor: els.fillColorInput.value,
-    fill: els.fillInput.value === "fill",
     size: Number(els.sizeInput.value),
     alpha: Number(els.alphaInput.value) / 100,
-    blur: Number(els.blurInput.value),
-    bold: els.boldToggle.classList.contains("active"),
-    italic: els.italicToggle.classList.contains("active"),
-    underline: els.underlineToggle.classList.contains("active"),
-    strike: els.strikeToggle.classList.contains("active"),
-    font: els.fontInput.value,
-    align: els.textAlignInput.value,
-    vAlign: els.textVAlignInput.value
+    blur: Number(els.blurInput.value)
   };
 }
 
@@ -365,11 +358,6 @@ function beginDraw(event) {
     render();
   }
 
-  if (state.tool === "sticker") {
-    addObject(createStickerObject(point));
-    state.drawing = false;
-    releasePointer(event.pointerId);
-  }
 }
 
 function moveDraw(event) {
@@ -468,14 +456,7 @@ function createDraftObject(start, end) {
       height: Math.max(44, box.height),
       text: "텍스트",
       color: style.color,
-      alpha: style.alpha,
-      bold: style.bold,
-      italic: style.italic,
-      underline: style.underline,
-      strike: style.strike,
-      font: style.font,
-      align: style.align,
-      vAlign: style.vAlign
+      alpha: style.alpha
     };
   }
 
@@ -487,29 +468,12 @@ function createDraftObject(start, end) {
     width: box.width,
     height: box.height,
     stroke: style.color,
-    fill: style.fill,
-    fillColor: style.fillColor,
     lineWidth: style.size,
     alpha: style.alpha,
     startX: start.x,
     startY: start.y,
     endX: end.x,
     endY: end.y
-  };
-}
-
-function createStickerObject(point) {
-  const { size, alpha } = getStyle();
-  const fontSize = Math.max(28, size * 2.2);
-  return {
-    id: 0,
-    type: "sticker",
-    x: point.x - fontSize / 2,
-    y: point.y - fontSize / 2,
-    width: fontSize,
-    height: fontSize,
-    sticker: state.sticker,
-    alpha
   };
 }
 
@@ -537,7 +501,6 @@ function drawObject(targetCtx, object) {
   targetCtx.globalAlpha = object.alpha;
 
   if (shapeTools.includes(object.type)) drawShapeObject(targetCtx, object);
-  if (object.type === "sticker") drawStickerObject(targetCtx, object);
   if (object.type === "text") drawTextObject(targetCtx, object);
 
   targetCtx.restore();
@@ -545,30 +508,21 @@ function drawObject(targetCtx, object) {
 
 function drawShapeObject(targetCtx, object) {
   targetCtx.strokeStyle = object.stroke;
-  targetCtx.fillStyle = object.fillColor;
   targetCtx.lineWidth = object.lineWidth;
   targetCtx.lineCap = "round";
   targetCtx.lineJoin = "round";
 
   if (object.type === "rect") {
-    if (object.fill) targetCtx.fillRect(object.x, object.y, object.width, object.height);
     targetCtx.strokeRect(object.x, object.y, object.width, object.height);
-  }
-
-  if (object.type === "roundRect") {
-    roundRect(targetCtx, object.x, object.y, object.width, object.height, Math.min(36, Math.max(10, object.lineWidth * 1.4)));
-    if (object.fill) targetCtx.fill();
-    targetCtx.stroke();
   }
 
   if (object.type === "ellipse") {
     targetCtx.beginPath();
     targetCtx.ellipse(object.x + object.width / 2, object.y + object.height / 2, Math.max(1, object.width / 2), Math.max(1, object.height / 2), 0, 0, Math.PI * 2);
-    if (object.fill) targetCtx.fill();
     targetCtx.stroke();
   }
 
-  if (object.type === "line" || object.type === "arrow") {
+  if (object.type === "arrow") {
     const start = { x: object.startX, y: object.startY };
     const end = { x: object.endX, y: object.endY };
     drawLineLike(targetCtx, object, start, end);
@@ -593,37 +547,22 @@ function drawLineLike(targetCtx, object, start, end) {
   targetCtx.fill();
 }
 
-function drawStickerObject(targetCtx, object) {
-  targetCtx.font = `${Math.max(18, object.height)}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
-  targetCtx.textAlign = "center";
-  targetCtx.textBaseline = "middle";
-  targetCtx.fillText(object.sticker, object.x + object.width / 2, object.y + object.height / 2);
-}
-
 function drawTextObject(targetCtx, object) {
   const fitted = fitTextToBox(targetCtx, object);
   const lines = fitted.lines;
   const size = fitted.size;
   const lineHeight = size * 1.22;
   const totalHeight = lines.length * lineHeight;
-  let y = object.y + size;
-  if (object.vAlign === "middle") y = object.y + (object.height - totalHeight) / 2 + size;
-  if (object.vAlign === "bottom") y = object.y + object.height - totalHeight + size;
+  let y = object.y + (object.height - totalHeight) / 2 + size;
 
-  targetCtx.font = textFont(object, size);
+  targetCtx.font = textFont(size);
   targetCtx.fillStyle = object.color;
   targetCtx.textBaseline = "alphabetic";
-  targetCtx.textAlign = object.align;
+  targetCtx.textAlign = "center";
 
-  const xMap = {
-    left: object.x,
-    center: object.x + object.width / 2,
-    right: object.x + object.width
-  };
-  const textX = xMap[object.align];
+  const textX = object.x + object.width / 2;
   lines.forEach((line) => {
     targetCtx.fillText(line, textX, y);
-    drawTextDecoration(targetCtx, object, line, textX, y, size);
     y += lineHeight;
   });
 }
@@ -632,7 +571,7 @@ function fitTextToBox(targetCtx, object) {
   const maxSize = Math.min(180, Math.max(18, object.height * .86));
   const minSize = 10;
   for (let size = maxSize; size >= minSize; size -= 1) {
-    targetCtx.font = textFont(object, size);
+    targetCtx.font = textFont(size);
     const lines = wrapText(targetCtx, object);
     const lineHeight = size * 1.22;
     const widest = Math.max(...lines.map((line) => targetCtx.measureText(line).width), 0);
@@ -640,12 +579,12 @@ function fitTextToBox(targetCtx, object) {
       return { lines, size };
     }
   }
-  targetCtx.font = textFont(object, minSize);
+  targetCtx.font = textFont(minSize);
   return { lines: wrapText(targetCtx, object), size: minSize };
 }
 
-function textFont(object, size) {
-  return `${object.italic ? "italic " : ""}${object.bold ? 900 : 500} ${size}px ${object.font || "Pretendard, \"Noto Sans KR\", sans-serif"}`;
+function textFont(size) {
+  return `900 ${size}px ${textFontFamily}`;
 }
 
 function wrapText(targetCtx, object) {
@@ -665,31 +604,6 @@ function wrapText(targetCtx, object) {
   return lines.length ? lines : [object.text];
 }
 
-function drawTextDecoration(targetCtx, object, line, textX, y, size) {
-  if (!object.underline && !object.strike) return;
-  const width = targetCtx.measureText(line).width;
-  let startX = textX;
-  if (object.align === "center") startX -= width / 2;
-  if (object.align === "right") startX -= width;
-
-  targetCtx.save();
-  targetCtx.strokeStyle = object.color;
-  targetCtx.lineWidth = Math.max(2, size / 12);
-  if (object.underline) {
-    targetCtx.beginPath();
-    targetCtx.moveTo(startX, y + size * .12);
-    targetCtx.lineTo(startX + width, y + size * .12);
-    targetCtx.stroke();
-  }
-  if (object.strike) {
-    targetCtx.beginPath();
-    targetCtx.moveTo(startX, y - size * .32);
-    targetCtx.lineTo(startX + width, y - size * .32);
-    targetCtx.stroke();
-  }
-  targetCtx.restore();
-}
-
 function drawSelection(object) {
   const box = objectBounds(object);
   ctx.save();
@@ -706,7 +620,7 @@ function drawSelection(object) {
 }
 
 function objectBounds(object) {
-  if (object.type === "line" || object.type === "arrow") {
+  if (object.type === "arrow") {
     return {
       x: Math.min(object.startX, object.endX),
       y: Math.min(object.startY, object.endY),
@@ -745,21 +659,12 @@ function updateSelectionControls() {
   if (!object) return;
   if (shapeTools.includes(object.type)) {
     setMainColor(object.stroke, false);
-    els.fillColorInput.value = object.fillColor;
-    els.fillInput.value = object.fill ? "fill" : "none";
     els.sizeInput.value = String(Math.min(90, Math.max(4, object.lineWidth)));
     els.alphaInput.value = String(Math.round(object.alpha * 100));
   }
   if (object.type === "text") {
     setMainColor(object.color, false);
     els.alphaInput.value = String(Math.round(object.alpha * 100));
-    els.fontInput.value = object.font || els.fontInput.options[0].value;
-    els.textAlignInput.value = object.align;
-    els.textVAlignInput.value = object.vAlign;
-    setFormatButton(els.boldToggle, object.bold);
-    setFormatButton(els.italicToggle, object.italic);
-    setFormatButton(els.underlineToggle, object.underline);
-    setFormatButton(els.strikeToggle, object.strike);
   }
 }
 
@@ -771,7 +676,7 @@ function transformSelected(point) {
   const original = state.dragStartObject;
 
   if (state.dragMode === "move") {
-    if (object.type === "line" || object.type === "arrow") {
+    if (object.type === "arrow") {
       object.startX = original.startX + dx;
       object.startY = original.startY + dy;
       object.endX = original.endX + dx;
@@ -790,7 +695,7 @@ function transformSelected(point) {
   if (state.dragMode === "resize") {
     object.width = Math.max(12, original.width + dx);
     object.height = Math.max(12, original.height + dy);
-    if (object.type === "line" || object.type === "arrow") {
+    if (object.type === "arrow") {
       object.endX = original.endX + dx;
       object.endY = original.endY + dy;
       object.x = Math.min(object.startX, object.endX);
@@ -862,21 +767,12 @@ function applySelectedStyle() {
   const style = getStyle();
   if (shapeTools.includes(object.type)) {
     object.stroke = style.color;
-    object.fillColor = style.fillColor;
-    object.fill = style.fill;
     object.lineWidth = style.size;
     object.alpha = style.alpha;
   }
   if (object.type === "text") {
     object.color = style.color;
     object.alpha = style.alpha;
-    object.bold = style.bold;
-    object.italic = style.italic;
-    object.underline = style.underline;
-    object.strike = style.strike;
-    object.font = style.font;
-    object.align = style.align;
-    object.vAlign = style.vAlign;
   }
   render();
   if (object.type === "text" && state.editingTextId === object.id) positionTextEditor(object);
@@ -903,8 +799,8 @@ function positionTextEditor(object, fittedSize = null) {
   els.textEditor.style.width = `${Math.max(32, object.width * scale.x)}px`;
   els.textEditor.style.height = `${Math.max(24, object.height * scale.y)}px`;
   els.textEditor.style.color = object.color;
-  els.textEditor.style.font = textFont(object, displaySize * scale.y);
-  els.textEditor.style.textAlign = object.align;
+  els.textEditor.style.font = textFont(displaySize * scale.y);
+  els.textEditor.style.textAlign = "center";
 }
 
 function hideTextEditor(commit) {
@@ -934,10 +830,6 @@ function setTool(tool) {
   });
 }
 
-function setFormatButton(button, active) {
-  button.classList.toggle("active", active);
-}
-
 function downloadImage() {
   hideTextEditor(true);
   render(false);
@@ -964,16 +856,8 @@ document.querySelectorAll(".tool").forEach((button) => {
   button.addEventListener("click", () => setTool(button.dataset.tool));
 });
 
-document.querySelectorAll(".sticker").forEach((button) => {
-  button.addEventListener("click", () => {
-    state.sticker = button.dataset.sticker;
-    document.querySelectorAll(".sticker").forEach((item) => item.classList.toggle("active", item === button));
-    setTool("sticker");
-  });
-});
-
 ["input", "change"].forEach((eventName) => {
-  [els.fillColorInput, els.fillInput, els.sizeInput, els.alphaInput, els.fontInput, els.textAlignInput, els.textVAlignInput].forEach((element) => {
+  [els.sizeInput, els.alphaInput].forEach((element) => {
     element.addEventListener(eventName, applySelectedStyle);
   });
 });
@@ -1014,13 +898,6 @@ els.textEditor.addEventListener("keydown", (event) => {
   }
 });
 
-[els.boldToggle, els.italicToggle, els.underlineToggle, els.strikeToggle].forEach((button) => {
-  button.addEventListener("click", () => {
-    button.classList.toggle("active");
-    applySelectedStyle();
-  });
-});
-
 els.imageInput.addEventListener("change", (event) => loadFile(event.target.files[0]));
 [els.uploadDropZone, els.canvasDropZone].forEach((dropZone) => {
   dropZone.addEventListener("dragenter", handleImageDrag);
@@ -1030,15 +907,19 @@ els.imageInput.addEventListener("change", (event) => loadFile(event.target.files
 });
 els.sampleButton.addEventListener("click", drawSample);
 els.resetButton.addEventListener("click", resetToOriginal);
-els.undoButton.addEventListener("click", () => {
-  if (state.history.length <= 1) return;
-  state.history.pop();
-  restoreState(state.history[state.history.length - 1]);
-});
+els.undoButton.addEventListener("click", undoLastAction);
 els.downloadButton.addEventListener("click", downloadImage);
 els.themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("light");
   els.themeToggle.textContent = document.body.classList.contains("light") ? "다크" : "라이트";
+});
+
+document.addEventListener("keydown", (event) => {
+  if (isEditableTarget(event.target)) return;
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z" && !event.shiftKey) {
+    event.preventDefault();
+    undoLastAction();
+  }
 });
 
 canvas.addEventListener("pointerdown", beginDraw);

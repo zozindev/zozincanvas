@@ -24,7 +24,7 @@
       "url": "https://zc.zozindev.com/",
       "applicationCategory": "MultimediaApplication",
       "operatingSystem": "Any",
-      "description": "브라우저 안에서 이미지 블러, 펜 표시, 도형, 스티커, 텍스트 편집을 처리하는 정적 이미지 편집기입니다.",
+      "description": "브라우저 안에서 이미지 블러, 펜 표시, 도형, 텍스트 편집을 처리하는 정적 이미지 편집기입니다.",
       "creator": {
         "@type": "Organization",
         "name": "zozindev",
@@ -75,11 +75,8 @@
           <button class="tool active" data-tool="draw" type="button">펜</button>
           <button class="tool" data-tool="blur" type="button">블러</button>
           <button class="tool" data-tool="rect" type="button">사각형</button>
-          <button class="tool" data-tool="roundRect" type="button">둥근네모</button>
           <button class="tool" data-tool="ellipse" type="button">원</button>
-          <button class="tool" data-tool="line" type="button">선</button>
           <button class="tool" data-tool="arrow" type="button">화살표</button>
-          <button class="tool" data-tool="sticker" type="button">스티커</button>
           <button class="tool" data-tool="text" type="button">텍스트</button>
         </div>
       </section>
@@ -92,7 +89,6 @@
           </label>
           <div class="color-tools" aria-label="색상 설정">
             <input id="hexInput" type="text" value="#ff4d4f" maxlength="7" aria-label="헥사코드">
-            <button id="eyedropperButton" type="button">스포이드</button>
           </div>
           <div class="swatch-row" aria-label="색상 프리셋">
             <button class="swatch" data-color="#fed002" style="--swatch: #fed002" type="button" aria-label="#fed002"></button>
@@ -102,6 +98,10 @@
             <button class="swatch" data-color="#ffffff" style="--swatch: #ffffff" type="button" aria-label="#ffffff"></button>
             <button class="swatch" data-color="#000000" style="--swatch: #000000" type="button" aria-label="#000000"></button>
           </div>
+          <details class="advanced-options">
+            <summary>고급</summary>
+            <button id="eyedropperButton" type="button">스포이드</button>
+          </details>
         </div>
         <label>
           굵기
@@ -115,62 +115,6 @@
           블러
           <input id="blurInput" type="range" min="4" max="28" value="14">
         </label>
-        <label>
-          채우기
-          <select id="fillInput">
-            <option value="none">없음</option>
-            <option value="fill">채우기</option>
-          </select>
-        </label>
-        <label>
-          채우기 색상
-          <input id="fillColorInput" type="color" value="#fff36d">
-        </label>
-      </section>
-
-      <section class="control-section">
-        <h2>스티커 / 텍스트</h2>
-        <div class="sticker-row" aria-label="스티커 선택">
-          <button class="sticker active" data-sticker="😊" type="button">😊</button>
-          <button class="sticker" data-sticker="✅" type="button">✅</button>
-          <button class="sticker" data-sticker="⭐" type="button">⭐</button>
-          <button class="sticker" data-sticker="📌" type="button">📌</button>
-          <button class="sticker" data-sticker="💬" type="button">💬</button>
-        </div>
-        <div class="text-options" aria-label="텍스트 옵션">
-          <button id="boldToggle" class="format-button" type="button">B</button>
-          <button id="italicToggle" class="format-button" type="button">I</button>
-          <button id="underlineToggle" class="format-button" type="button">U</button>
-          <button id="strikeToggle" class="format-button" type="button">S</button>
-        </div>
-        <div class="two-cols">
-          <label>
-            글꼴
-            <select id="fontInput">
-              <option value="Pretendard, &quot;Noto Sans KR&quot;, sans-serif" selected>기본 고딕</option>
-              <option value="Georgia, serif">Serif</option>
-              <option value="Arial, sans-serif">Arial</option>
-              <option value="&quot;Courier New&quot;, monospace">Mono</option>
-              <option value="Impact, sans-serif">Impact</option>
-            </select>
-          </label>
-          <label>
-            수평 정렬
-            <select id="textAlignInput">
-              <option value="left">왼쪽</option>
-              <option value="center" selected>가운데</option>
-              <option value="right">오른쪽</option>
-            </select>
-          </label>
-          <label>
-            수직 정렬
-            <select id="textVAlignInput">
-              <option value="top">위</option>
-              <option value="middle" selected>가운데</option>
-              <option value="bottom">아래</option>
-            </select>
-          </label>
-        </div>
       </section>
 
       <section class="control-section">
@@ -207,7 +151,7 @@
       </div>
       <div class="tips" id="usage">
         <strong>사용법</strong>
-        <span>업로드 후 펜/블러는 드래그, 도형/텍스트는 드래그로 만들고 선택 도구로 위치와 크기를 조절합니다. 텍스트는 편집창 안에서 바로 입력합니다.</span>
+        <span>업로드 후 블러로 가리고, 펜/도형/텍스트로 표시한 뒤 이미지로 저장합니다. 텍스트는 편집창 안에서 바로 입력합니다.</span>
       </div>
       <section class="seo-content" aria-label="zozincanvas 소개">
         <h2>브라우저에서 끝내는 이미지 표시 도구</h2>
