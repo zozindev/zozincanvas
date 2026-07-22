@@ -446,6 +446,24 @@ canvas {
   margin-top: 30px;
 }
 
+.proof-image {
+  margin: 28px 0;
+}
+
+.proof-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.proof-image figcaption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 @media (max-width: 980px) {
   .app {
     grid-template-columns: 1fr;

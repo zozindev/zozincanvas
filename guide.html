@@ -9,11 +9,26 @@
   <meta property="og:type" content="article">
   <meta property="og:title" content="zozincanvas 사용 가이드">
   <meta property="og:description" content="서버 업로드 없이 이미지 가리기, 표시, 텍스트 편집, 다운로드를 처리하는 방법입니다.">
-  <meta property="og:url" content="https://zc.zozindev.com/guide.html">
+  <meta property="og:url" content="https://zc.zozindev.com/guide">
   <meta property="og:site_name" content="zozincanvas">
-  <link rel="canonical" href="https://zc.zozindev.com/guide.html">
+  <link rel="canonical" href="https://zc.zozindev.com/guide">
   <title>zozincanvas 사용 가이드</title>
   <link rel="stylesheet" href="style.css">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "zozincanvas 사용 가이드",
+      "datePublished": "2026-06-15",
+      "dateModified": "2026-07-22",
+      "author": {
+        "@type": "Person",
+        "name": "zozindev",
+        "url": "https://zozindev.com/about/"
+      },
+      "mainEntityOfPage": "https://zc.zozindev.com/guide"
+    }
+  </script>
 </head>
 <body>
   <header class="topbar">
@@ -23,13 +38,18 @@
     </a>
     <nav class="top-actions" aria-label="상단 메뉴">
       <a class="ghost-link" href="./">편집기</a>
-      <a class="ghost-link" href="privacy.html">개인정보</a>
+      <a class="ghost-link" href="/privacy">개인정보</a>
     </nav>
   </header>
 
   <main class="doc-page">
     <h1>zozincanvas 사용 가이드</h1>
     <p>블로그나 문서에 이미지를 올리기 전에 빠르게 가리고 표시하는 용도로 만들었다. 설치 없다. 업로드 서버도 없다. 브라우저에서 열고 바로 쓰면 된다.</p>
+
+    <figure class="proof-image">
+      <img src="assets/zozincanvas-editor.png" alt="샘플 이미지와 펜, 블러, 도형, 텍스트 도구가 열린 zozincanvas 실제 화면" width="1265" height="712">
+      <figcaption>2026년 7월 실제 화면. 왼쪽에서 도구를 고르고 오른쪽 캔버스에서 바로 편집한다.</figcaption>
+    </figure>
 
     <h2>1. 이미지 올리기</h2>
     <p>이미지 업로드 박스를 클릭하거나 파일을 끌어다 놓으면 된다. 편집 영역 위에 바로 드롭해도 된다. PNG, JPG, WEBP를 지원한다.</p>
@@ -64,7 +84,11 @@
     <p>캡처 이미지나 UI 설명 이미지는 PNG가 선명하다. 사진처럼 색이 많은 이미지는 JPG가 용량을 줄이기 쉽다. 투명 배경이 필요한 이미지나 웹에서 가볍게 쓰려는 이미지는 WebP를 고를 수 있다. 다만 올릴 서비스가 WebP를 받지 않는 경우가 있으므로, 블로그나 커뮤니티에 올리기 전에는 지원 형식을 확인하는 편이 낫다.</p>
 
     <h2>브라우저 안에서 처리한다는 의미</h2>
-    <p>zozincanvas는 편집 중인 이미지 파일을 서버로 업로드하지 않는다. 파일 선택, 캔버스 편집, 다운로드가 현재 브라우저 안에서 처리된다. 그래도 저장한 결과물을 어디에 올릴지는 사용자가 결정해야 한다. 편집 후에도 민감한 정보가 남아 있으면 다운로드 파일을 공유하지 말고 다시 가린 뒤 저장하는 것이 안전하다.</p>
+    <p>zozincanvas는 편집 중인 이미지 파일을 서버로 업로드하지 않는다. 파일 선택은 FileReader, 편집은 Canvas, 다운로드는 브라우저의 데이터 URL을 사용한다. 현재 공개 코드에는 이미지 파일을 보내는 fetch나 XMLHttpRequest가 없다. 그래도 저장한 결과물을 어디에 올릴지는 사용자가 결정해야 한다. 편집 후에도 민감한 정보가 남아 있으면 다운로드 파일을 공유하지 말고 다시 가린 뒤 저장하는 것이 안전하다.</p>
+
+    <h2>샘플로 먼저 확인해 본 것</h2>
+    <p>처음 열면 1280×820 샘플을 불러올 수 있다. 샘플의 사람 얼굴 하나를 블러로 문지르고, 건물 쪽에는 사각형, 설명할 위치에는 화살표를 넣어 봤다. 선택 도구로 만든 표시를 다시 잡아 이동할 수 있고, 텍스트는 캔버스 안 편집창에서 고친다. 실수했을 때는 되돌리기를 누르면 마지막 작업 하나가 빠진다.</p>
+    <p>이 순서로 확인한 이유는 실제 캡처를 바로 올렸을 때 도구를 익히느라 원본을 망칠 가능성을 줄이기 위해서다. 샘플에서 블러 강도와 굵기를 한 번 맞춘 뒤 원본으로 바꾸면 작업이 빠르다.</p>
   </main>
 </body>
 </html>
